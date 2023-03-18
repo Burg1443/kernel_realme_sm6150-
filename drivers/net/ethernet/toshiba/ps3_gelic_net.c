@@ -390,7 +390,6 @@ static int gelic_descr_prepare_rx(struct gelic_card *card,
 	static const unsigned int rx_skb_size =
 		ALIGN(GELIC_NET_MAX_FRAME, GELIC_NET_RXBUF_ALIGN) +
 		GELIC_NET_RXBUF_ALIGN - 1;
-	dma_addr_t cpu_addr;
 	int offset;
 
 	if (gelic_descr_get_status(descr) !=  GELIC_DESCR_DMA_NOT_IN_USE)
@@ -413,11 +412,12 @@ static int gelic_descr_prepare_rx(struct gelic_card *card,
 		(GELIC_NET_RXBUF_ALIGN - 1);
 	if (offset)
 		skb_reserve(descr->skb, GELIC_NET_RXBUF_ALIGN - offset);
-	/* io-mmu-map the skb */
-	cpu_addr = dma_map_single(ctodev(card), descr->skb->data,
-				  GELIC_NET_MAX_FRAME, DMA_FROM_DEVICE);
-	descr->buf_addr = cpu_to_be32(cpu_addr);
-	if (dma_mapping_error(ctodev(card), cpu_addr)) {
+	/* io-mmu-map the skb */ =======
+	descr->buf_addr = cpu_to_be32(dma_map_single(ctodev(card),
+						     descr->skb->data,
+						     GELIC_NET_MAX_FRAME,
+						     DMA_FROM_DEVICE));
+	if (!descr->buf_addr) {
 		dev_kfree_skb_any(descr->skb);
 		descr->skb = NULL;
 		dev_info(ctodev(card),
